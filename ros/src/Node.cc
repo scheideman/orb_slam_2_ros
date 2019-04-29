@@ -28,6 +28,12 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
   if (publish_pose_param_) {
     pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped> (name_of_node_+"/pose", 1);
   }
+
+  keyframe_publisher_ = node_handle_.advertise<geometry_msgs::PoseArray> (name_of_node_+"/keyframes",1);
+
+  request_keyframes_service_ = node_handle_.advertiseService("request_keyframes", 
+                                                    &Node::RequestKeyFrames, this);
+
 }
 
 
@@ -178,4 +184,23 @@ void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &confi
   }
 
   orb_slam_->SetMinimumKeyFrames (config.min_num_kf_in_map);
+}
+
+bool Node::RequestKeyFrames(std_srvs::Empty::Request &request, 
+                                             std_srvs::Empty::Response &response){
+    std::vector<cv::Mat> keyframes = orb_slam_->GetAllKeyFrames();    
+    geometry_msgs::PoseArray poseArray;
+    poseArray.header.stamp = ros::Time::now();
+    poseArray.header.frame_id = map_frame_id_param_;
+
+    for(auto kf : keyframes){
+      tf::Transform tfT = TransformFromMat(kf);
+      tf::Pose tfPose(tfT);
+      geometry_msgs::Pose poseMsg;
+      tf::poseTFToMsg(tfPose,poseMsg);
+      poseArray.poses.push_back(poseMsg);
+    }
+    keyframe_publisher_.publish(poseArray);
+
+    return true;
 }

@@ -512,4 +512,20 @@ void System::EnableLocalizationOnly (bool localize_only) {
   }
 }
 
+std::vector<cv::Mat> System::GetAllKeyFrames()
+{
+  const vector<KeyFrame*> keyframes = mpMap->GetAllKeyFrames();
+  vector<cv::Mat> displayframes;
+
+  for(size_t i=0; i<keyframes.size(); i++)
+  {
+    KeyFrame* kf = keyframes[i];
+    if(kf->isBad())
+      continue;
+    cv::Mat Tcw = kf->GetPose();
+    displayframes.push_back(Tcw);
+  }
+  return displayframes; 
+}
+
 } //namespace ORB_SLAM

@@ -38,6 +38,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
+#include <std_srvs/Empty.h>
 
 #include "System.h"
 
@@ -61,6 +63,8 @@ class Node
     void PublishPositionAsPoseStamped(cv::Mat position);
     void PublishRenderedImage (cv::Mat image);
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
+    bool RequestKeyFrames(std_srvs::Empty::Request &request, 
+                                             std_srvs::Empty::Response &response);
     tf::Transform TransformFromMat (cv::Mat position_mat);
     sensor_msgs::PointCloud2 MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points);
 
@@ -69,9 +73,11 @@ class Node
     image_transport::Publisher rendered_image_publisher_;
     ros::Publisher map_points_publisher_;
     ros::Publisher pose_publisher_;
+    ros::Publisher keyframe_publisher_;
 
     std::string name_of_node_;
     ros::NodeHandle node_handle_;
+    ros::ServiceServer request_keyframes_service_;
 
     std::string map_frame_id_param_;
     std::string camera_frame_id_param_;
