@@ -512,17 +512,25 @@ void System::EnableLocalizationOnly (bool localize_only) {
   }
 }
 
-std::vector<cv::Mat> System::GetAllKeyFrames()
+std::vector<cv::Mat> System::GetAllSortedKeyFrames()
 {
-  const vector<KeyFrame*> keyframes = mpMap->GetAllKeyFrames();
-  vector<cv::Mat> displayframes;
-
-  for(size_t i=0; i<keyframes.size(); i++)
-  {
-    KeyFrame* kf = keyframes[i];
+  vector<KeyFrame*> unsorted_keyframes = mpMap->GetAllKeyFrames();
+  vector<KeyFrame> keyframes;
+  unordered_map<long unsigned int,KeyFrame*> idMap;
+  vector<long unsigned int> keys;
+  for(auto kf : unsorted_keyframes){
     if(kf->isBad())
       continue;
-    cv::Mat Tcw = kf->GetPose();
+    idMap[kf->mnId] = kf;
+    keys.push_back(kf->mnId);
+  }
+
+  sort(keys.begin(),keys.end());
+  vector<cv::Mat> displayframes;
+
+  for(auto kfId : keys)
+  {
+    cv::Mat Tcw = idMap[kfId]->GetPose();
     displayframes.push_back(Tcw);
   }
   return displayframes; 

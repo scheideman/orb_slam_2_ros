@@ -125,7 +125,7 @@ public:
 
     std::vector<MapPoint*> GetAllMapPoints();
 
-    std::vector<cv::Mat> GetAllKeyFrames();
+    std::vector<cv::Mat> GetAllSortedKeyFrames();
 
 private:
     // This stops local mapping thread (map building) and performs only camera tracking.

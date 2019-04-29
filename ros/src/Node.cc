@@ -188,7 +188,7 @@ void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &confi
 
 bool Node::RequestKeyFrames(std_srvs::Empty::Request &request, 
                                              std_srvs::Empty::Response &response){
-    std::vector<cv::Mat> keyframes = orb_slam_->GetAllKeyFrames();    
+    std::vector<cv::Mat> keyframes = orb_slam_->GetAllSortedKeyFrames();    
     geometry_msgs::PoseArray poseArray;
     poseArray.header.stamp = ros::Time::now();
     poseArray.header.frame_id = map_frame_id_param_;
