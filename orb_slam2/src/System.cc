@@ -516,7 +516,7 @@ std::vector<cv::Mat> System::GetAllSortedKeyFrames()
 {
   vector<KeyFrame*> keyframes = mpMap->GetAllKeyFrames();
   vector<cv::Mat> displayframes;
-  sort(keyframes.begin(),keyframes.end());
+  sort(keyframes.begin(),keyframes.end(),KeyFrame::lId);
   for(auto kf : keyframes){
     if(kf->isBad())
       continue;
