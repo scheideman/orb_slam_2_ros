@@ -10,7 +10,7 @@
        <param name="localize_only" type="bool" value="false" />
        <param name="reset_map" type="bool" value="false" />
        <param name="pointcloud_frame_id" type="string" value="map" />
-       <param name="camera_frame_id" type="string" value="camera_link" />
+       <param name="camera_frame_id" type="string" value="camera_rgb_frame" />
        <param name="min_num_kf_in_map" type="int" value="5" />
   </node>
 </launch>

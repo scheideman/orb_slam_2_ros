@@ -104,11 +104,26 @@ void Node::PublishPositionAsTransform (cv::Mat position) {
 }
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
-  tf::Transform grasp_tf = TransformFromMat (position);
-  tf::Stamped<tf::Pose> grasp_tf_pose(grasp_tf, current_frame_time_, map_frame_id_param_);
-  geometry_msgs::PoseStamped pose_msg;
-  tf::poseStampedTFToMsg (grasp_tf_pose, pose_msg);
-  pose_publisher_.publish(pose_msg);
+  tf2::Transform grasp_tf = Transform2FromMat (position);
+
+  geometry_msgs::PoseStamped grasp;
+  geometry_msgs::PoseStamped base_link;
+
+  tf2::toMsg(grasp_tf.inverse(), grasp.pose);
+  grasp.header.frame_id = camera_frame_id_param_;
+  grasp.header.stamp = current_frame_time_;
+
+  this->tf_->transform(grasp, base_link, "base_link");
+  
+  tf2::Transform base_link_transform;
+
+  //invert
+  tf2::convert(base_link.pose, base_link_transform);
+  tf2::toMsg(base_link_transform.inverse(), base_link.pose);
+  // tf::Stamped<tf::Pose> grasp_tf_pose(grasp_tf, current_frame_time_, map_frame_id_param_);
+  // geometry_msgs::PoseStamped pose_msg;
+  // tf::poseStampedTFToMsg (grasp_tf_pose, pose_msg);
+  pose_publisher_.publish(base_link);
 }
 
 
