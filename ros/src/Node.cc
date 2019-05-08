@@ -33,7 +33,9 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
 
   request_keyframes_service_ = node_handle_.advertiseService("request_keyframes", 
                                                     &Node::RequestKeyFrames, this);
-
+  tfb_.reset(new tf2_ros::TransformBroadcaster());
+  tf_.reset(new tf2_ros::Buffer());
+  tfl_.reset(new tf2_ros::TransformListener(*tf_));
 }
 
 
@@ -69,9 +71,36 @@ void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
 
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
-  tf::Transform transform = TransformFromMat (position);
-  static tf::TransformBroadcaster tf_broadcaster;
-  tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
+  tf2::Transform tf2_transform = Transform2FromMat (position);
+
+  // static tf2::TransformBroadcaster tf_broadcaster;
+  
+  try{
+    geometry_msgs::PoseStamped odom_to_map;
+    geometry_msgs::PoseStamped camera_to_map;
+    camera_to_map.header.frame_id = camera_frame_id_param_;
+    camera_to_map.header.stamp = current_frame_time_;
+    tf2::toMsg(tf2_transform.inverse(), camera_to_map.pose);
+
+    this->tf_->transform(camera_to_map, odom_to_map, "odom");
+
+    tf2::Transform cur_transform;
+    tf2::convert(odom_to_map.pose, cur_transform);
+
+    geometry_msgs::TransformStamped out_tf_stamped;
+    out_tf_stamped.header.frame_id = map_frame_id_param_;
+    out_tf_stamped.header.stamp = current_frame_time_;
+    out_tf_stamped.child_frame_id = "odom";
+    tf2::convert(cur_transform.inverse(), out_tf_stamped.transform);
+    tfb_->sendTransform(out_tf_stamped);
+  }
+  catch(tf2::TransformException)
+  {
+    ROS_DEBUG("Could not get map to odom transform");
+    return;
+  }
+
+  // tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
 }
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
@@ -91,6 +120,40 @@ void Node::PublishRenderedImage (cv::Mat image) {
   rendered_image_publisher_.publish(rendered_image_msg);
 }
 
+
+tf2::Transform Node::Transform2FromMat (cv::Mat position_mat) {
+  cv::Mat rotation(3,3,CV_32F);
+  cv::Mat translation(3,1,CV_32F);
+
+  rotation = position_mat.rowRange(0,3).colRange(0,3);
+  translation = position_mat.rowRange(0,3).col(3);
+
+  tf2::Matrix3x3 tf_camera_rotation (rotation.at<float> (0,0), rotation.at<float> (0,1), rotation.at<float> (0,2),
+                                    rotation.at<float> (1,0), rotation.at<float> (1,1), rotation.at<float> (1,2),
+                                    rotation.at<float> (2,0), rotation.at<float> (2,1), rotation.at<float> (2,2)
+                                   );
+
+  tf2::Vector3 tf_camera_translation (translation.at<float> (0), translation.at<float> (1), translation.at<float> (2));
+
+  //Coordinate transformation matrix from orb coordinate system to ros coordinate system
+  const tf2::Matrix3x3 tf_orb_to_ros (0, 0, 1,
+                                    -1, 0, 0,
+                                     0,-1, 0);
+
+  //Transform from orb coordinate system to ros coordinate system on camera coordinates
+  tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
+  tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
+
+  //Inverse matrix
+  tf_camera_rotation = tf_camera_rotation.transpose();
+  tf_camera_translation = -(tf_camera_rotation*tf_camera_translation);
+
+  //Transform from orb coordinate system to ros coordinate system on map coordinates
+  tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
+  tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
+
+  return tf2::Transform (tf_camera_rotation, tf_camera_translation);
+}
 
 tf::Transform Node::TransformFromMat (cv::Mat position_mat) {
   cv::Mat rotation(3,3,CV_32F);
@@ -125,7 +188,6 @@ tf::Transform Node::TransformFromMat (cv::Mat position_mat) {
 
   return tf::Transform (tf_camera_rotation, tf_camera_translation);
 }
-
 
 sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points) {
   if (map_points.size() == 0) {

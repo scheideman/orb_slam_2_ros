@@ -26,6 +26,13 @@
 #include <ros/time.h>
 #include <image_transport/image_transport.h>
 #include <tf/transform_broadcaster.h>
+#include "tf2_ros/buffer.h"
+#include "tf2/LinearMath/Transform.h"
+#include "tf2/convert.h"
+#include "tf2/utils.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/transform_listener.h"
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
 
@@ -65,6 +72,7 @@ class Node
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
     bool RequestKeyFrames(std_srvs::Empty::Request &request, 
                                              std_srvs::Empty::Response &response);
+    tf2::Transform Transform2FromMat (cv::Mat position_mat);
     tf::Transform TransformFromMat (cv::Mat position_mat);
     sensor_msgs::PointCloud2 MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points);
 
@@ -84,6 +92,10 @@ class Node
     bool publish_pointcloud_param_;
     bool publish_pose_param_;
     int min_observations_per_point_;
+
+    std::shared_ptr<tf2_ros::TransformBroadcaster> tfb_;
+    std::shared_ptr<tf2_ros::TransformListener> tfl_;
+    std::shared_ptr<tf2_ros::Buffer> tf_;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_
