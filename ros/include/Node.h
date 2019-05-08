@@ -67,6 +67,8 @@ class Node
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);
+    void PublishMapToOdomTransform(tf2::Transform transform);
+    void PublishMapToCameraTransform(tf2::Transform transform);
     void PublishPositionAsPoseStamped(cv::Mat position);
     void PublishRenderedImage (cv::Mat image);
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
@@ -92,6 +94,7 @@ class Node
     bool publish_pointcloud_param_;
     bool publish_pose_param_;
     int min_observations_per_point_;
+    bool publish_map_to_odom_param_;
 
     std::shared_ptr<tf2_ros::TransformBroadcaster> tfb_;
     std::shared_ptr<tf2_ros::TransformListener> tfl_;

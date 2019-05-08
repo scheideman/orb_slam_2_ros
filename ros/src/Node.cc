@@ -11,6 +11,7 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
   //static parameters
   node_handle_.param(name_of_node_+"/publish_pointcloud", publish_pointcloud_param_, true);
   node_handle_.param(name_of_node_+"/publish_pose", publish_pose_param_, true);
+  node_handle_.param(name_of_node_+"/publish_map_to_odom", publish_map_to_odom_param_, true);
   node_handle_.param<std::string>(name_of_node_+"/pointcloud_frame_id", map_frame_id_param_, "map");
   node_handle_.param<std::string>(name_of_node_+"/camera_frame_id", camera_frame_id_param_, "camera_link");
 
@@ -72,15 +73,21 @@ void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
   tf2::Transform tf2_transform = Transform2FromMat (position);
-
-  // static tf2::TransformBroadcaster tf_broadcaster;
   
+  if(publish_map_to_odom_param_){
+    PublishMapToOdomTransform(tf2_transform);
+  }else{
+    PublishMapToCameraTransform(tf2_transform);
+  }
+}
+
+void Node::PublishMapToOdomTransform(tf2::Transform transform){
   try{
     geometry_msgs::PoseStamped odom_to_map;
     geometry_msgs::PoseStamped camera_to_map;
     camera_to_map.header.frame_id = camera_frame_id_param_;
     camera_to_map.header.stamp = current_frame_time_;
-    tf2::toMsg(tf2_transform.inverse(), camera_to_map.pose);
+    tf2::toMsg(transform.inverse(), camera_to_map.pose);
 
     this->tf_->transform(camera_to_map, odom_to_map, "odom");
 
@@ -97,10 +104,10 @@ void Node::PublishPositionAsTransform (cv::Mat position) {
   catch(tf2::TransformException)
   {
     ROS_DEBUG("Could not get map to odom transform");
-    return;
   }
+}
+void Node::PublishMapToCameraTransform(tf2::Transform transform){
 
-  // tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
 }
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
