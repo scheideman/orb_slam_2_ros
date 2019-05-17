@@ -12,5 +12,8 @@
        <param name="pointcloud_frame_id" type="string" value="map" />
        <param name="camera_frame_id" type="string" value="camera_rgb_frame" />
        <param name="min_num_kf_in_map" type="int" value="5" />
+
+       <param name="publish_map_to_odom" type="bool" value="false"/>
+       <param name="robot_base_link_frame_id" type="string" value="camera_rgb_frame"/>
   </node>
 </launch>

@@ -45,6 +45,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
 #include <std_srvs/Empty.h>
 
@@ -74,8 +75,7 @@ class Node
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
     bool RequestKeyFrames(std_srvs::Empty::Request &request, 
                                              std_srvs::Empty::Response &response);
-    tf2::Transform Transform2FromMat (cv::Mat position_mat);
-    tf::Transform TransformFromMat (cv::Mat position_mat);
+    tf2::Transform TransformFromMat (cv::Mat position_mat);
     sensor_msgs::PointCloud2 MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points);
 
     dynamic_reconfigure::Server<orb_slam2_ros::dynamic_reconfigureConfig> dynamic_param_server_;
@@ -91,6 +91,7 @@ class Node
 
     std::string map_frame_id_param_;
     std::string camera_frame_id_param_;
+    std::string robot_base_link_frame_id_param_;
     bool publish_pointcloud_param_;
     bool publish_pose_param_;
     int min_observations_per_point_;

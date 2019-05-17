@@ -11,9 +11,11 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
   //static parameters
   node_handle_.param(name_of_node_+"/publish_pointcloud", publish_pointcloud_param_, true);
   node_handle_.param(name_of_node_+"/publish_pose", publish_pose_param_, true);
-  node_handle_.param(name_of_node_+"/publish_map_to_odom", publish_map_to_odom_param_, true);
+  node_handle_.param(name_of_node_+"/publish_map_to_odom", publish_map_to_odom_param_, false);
   node_handle_.param<std::string>(name_of_node_+"/pointcloud_frame_id", map_frame_id_param_, "map");
   node_handle_.param<std::string>(name_of_node_+"/camera_frame_id", camera_frame_id_param_, "camera_link");
+  node_handle_.param<std::string>(name_of_node_+"/robot_base_link_frame_id", robot_base_link_frame_id_param_, camera_frame_id_param_);
+
 
   //Setup dynamic reconfigure
   dynamic_reconfigure::Server<orb_slam2_ros::dynamic_reconfigureConfig>::CallbackType dynamic_param_callback;
@@ -72,7 +74,7 @@ void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
 
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
-  tf2::Transform tf2_transform = Transform2FromMat (position);
+  tf2::Transform tf2_transform = TransformFromMat (position);
   
   if(publish_map_to_odom_param_){
     PublishMapToOdomTransform(tf2_transform);
@@ -85,20 +87,21 @@ void Node::PublishMapToOdomTransform(tf2::Transform transform){
   try{
     geometry_msgs::PoseStamped odom_to_map;
     geometry_msgs::PoseStamped camera_to_map;
+
     camera_to_map.header.frame_id = camera_frame_id_param_;
     camera_to_map.header.stamp = current_frame_time_;
     tf2::toMsg(transform.inverse(), camera_to_map.pose);
 
     this->tf_->transform(camera_to_map, odom_to_map, "odom");
 
-    tf2::Transform cur_transform;
-    tf2::convert(odom_to_map.pose, cur_transform);
+    tf2::Transform odom_to_map_tf;
+    tf2::convert(odom_to_map.pose, odom_to_map_tf);
 
     geometry_msgs::TransformStamped out_tf_stamped;
     out_tf_stamped.header.frame_id = map_frame_id_param_;
     out_tf_stamped.header.stamp = current_frame_time_;
     out_tf_stamped.child_frame_id = "odom";
-    tf2::convert(cur_transform.inverse(), out_tf_stamped.transform);
+    tf2::convert(odom_to_map_tf.inverse(), out_tf_stamped.transform);
     tfb_->sendTransform(out_tf_stamped);
   }
   catch(tf2::TransformException)
@@ -107,30 +110,36 @@ void Node::PublishMapToOdomTransform(tf2::Transform transform){
   }
 }
 void Node::PublishMapToCameraTransform(tf2::Transform transform){
-
+  geometry_msgs::TransformStamped tf_stamped;
+  tf_stamped.header.frame_id = map_frame_id_param_;
+  tf_stamped.header.stamp = current_frame_time_;
+  tf_stamped.child_frame_id = camera_frame_id_param_;
+  tf2::convert(transform, tf_stamped.transform);
+  tfb_->sendTransform(tf_stamped);
 }
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
-  tf2::Transform grasp_tf = Transform2FromMat (position);
+  tf2::Transform map_to_camera_tf = TransformFromMat (position);
 
-  geometry_msgs::PoseStamped grasp;
-  geometry_msgs::PoseStamped base_link;
+  // geometry_msgs::PoseStamped camera_to_map;
+  // geometry_msgs::PoseStamped base_link_to_map;
 
-  tf2::toMsg(grasp_tf.inverse(), grasp.pose);
-  grasp.header.frame_id = camera_frame_id_param_;
-  grasp.header.stamp = current_frame_time_;
+  // tf2::toMsg(map_to_camera_tf.inverse(), camera_to_map.pose);
+  // camera_to_map.header.frame_id = camera_frame_id_param_;
+  // camera_to_map.header.stamp = current_frame_time_;
 
-  this->tf_->transform(grasp, base_link, "base_link");
-  
-  tf2::Transform base_link_transform;
+  // this->tf_->transform(camera_to_map, base_link_to_map, robot_base_link_frame_id_param_);
 
-  //invert
-  tf2::convert(base_link.pose, base_link_transform);
-  tf2::toMsg(base_link_transform.inverse(), base_link.pose);
-  // tf::Stamped<tf::Pose> grasp_tf_pose(grasp_tf, current_frame_time_, map_frame_id_param_);
-  // geometry_msgs::PoseStamped pose_msg;
-  // tf::poseStampedTFToMsg (grasp_tf_pose, pose_msg);
-  pose_publisher_.publish(base_link);
+  // tf2::Transform base_link_to_map_tf;
+  // tf2::convert(base_link_to_map.pose, base_link_to_map_tf);
+
+  geometry_msgs::PoseStamped map_to_base_link;
+  // tf2::toMsg(base_link_to_map_tf.inverse(), map_to_base_link.pose);
+  tf2::toMsg(map_to_camera_tf, map_to_base_link.pose);
+  map_to_base_link.header.frame_id = robot_base_link_frame_id_param_;
+  map_to_base_link.header.stamp = current_frame_time_;
+
+  pose_publisher_.publish(map_to_base_link);
 }
 
 
@@ -143,7 +152,7 @@ void Node::PublishRenderedImage (cv::Mat image) {
 }
 
 
-tf2::Transform Node::Transform2FromMat (cv::Mat position_mat) {
+tf2::Transform Node::TransformFromMat (cv::Mat position_mat) {
   cv::Mat rotation(3,3,CV_32F);
   cv::Mat translation(3,1,CV_32F);
 
@@ -175,40 +184,6 @@ tf2::Transform Node::Transform2FromMat (cv::Mat position_mat) {
   tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
 
   return tf2::Transform (tf_camera_rotation, tf_camera_translation);
-}
-
-tf::Transform Node::TransformFromMat (cv::Mat position_mat) {
-  cv::Mat rotation(3,3,CV_32F);
-  cv::Mat translation(3,1,CV_32F);
-
-  rotation = position_mat.rowRange(0,3).colRange(0,3);
-  translation = position_mat.rowRange(0,3).col(3);
-
-  tf::Matrix3x3 tf_camera_rotation (rotation.at<float> (0,0), rotation.at<float> (0,1), rotation.at<float> (0,2),
-                                    rotation.at<float> (1,0), rotation.at<float> (1,1), rotation.at<float> (1,2),
-                                    rotation.at<float> (2,0), rotation.at<float> (2,1), rotation.at<float> (2,2)
-                                   );
-
-  tf::Vector3 tf_camera_translation (translation.at<float> (0), translation.at<float> (1), translation.at<float> (2));
-
-  //Coordinate transformation matrix from orb coordinate system to ros coordinate system
-  const tf::Matrix3x3 tf_orb_to_ros (0, 0, 1,
-                                    -1, 0, 0,
-                                     0,-1, 0);
-
-  //Transform from orb coordinate system to ros coordinate system on camera coordinates
-  tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
-  tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
-
-  //Inverse matrix
-  tf_camera_rotation = tf_camera_rotation.transpose();
-  tf_camera_translation = -(tf_camera_rotation*tf_camera_translation);
-
-  //Transform from orb coordinate system to ros coordinate system on map coordinates
-  tf_camera_rotation = tf_orb_to_ros*tf_camera_rotation;
-  tf_camera_translation = tf_orb_to_ros*tf_camera_translation;
-
-  return tf::Transform (tf_camera_rotation, tf_camera_translation);
 }
 
 sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points) {
@@ -278,10 +253,9 @@ bool Node::RequestKeyFrames(std_srvs::Empty::Request &request,
     poseArray.header.frame_id = map_frame_id_param_;
 
     for(auto kf : keyframes){
-      tf::Transform tfT = TransformFromMat(kf);
-      tf::Pose tfPose(tfT);
+      tf2::Transform tfT = TransformFromMat(kf);
       geometry_msgs::Pose poseMsg;
-      tf::poseTFToMsg(tfPose,poseMsg);
+      tf2::toMsg(tfT, poseMsg);
       poseArray.poses.push_back(poseMsg);
     }
     keyframe_publisher_.publish(poseArray);
