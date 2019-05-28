@@ -67,6 +67,7 @@ class Node
 
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
+    void PublishReferencePoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);
     void PublishMapToOdomTransform(tf2::Transform transform);
     void PublishMapToCameraTransform(tf2::Transform transform);
@@ -83,6 +84,7 @@ class Node
 
     image_transport::Publisher rendered_image_publisher_;
     ros::Publisher map_points_publisher_;
+    ros::Publisher reference_points_publisher_;
     ros::Publisher pose_publisher_;
     ros::Publisher keyframe_publisher_;
 

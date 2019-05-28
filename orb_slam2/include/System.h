@@ -125,6 +125,8 @@ public:
 
     std::vector<MapPoint*> GetAllMapPoints();
 
+    std::vector<MapPoint*> GetReferenceMapPoints();
+
     std::vector<cv::Mat> GetAllSortedKeyFrames();
 
 private:

@@ -25,6 +25,7 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
   rendered_image_publisher_ = image_transport.advertise (name_of_node_+"/debug_image", 1);
   if (publish_pointcloud_param_) {
     map_points_publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2> (name_of_node_+"/map_points", 1);
+    reference_points_publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2> (name_of_node_+"/reference_points", 1);
   }
 
   // Enable publishing camera's pose as PoseStamped message
@@ -62,16 +63,20 @@ void Node::Update () {
 
   if (publish_pointcloud_param_) {
     PublishMapPoints (orb_slam_->GetAllMapPoints());
+    PublishReferencePoints(orb_slam_->GetReferenceMapPoints());
   }
   
 }
-
 
 void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
   sensor_msgs::PointCloud2 cloud = MapPointsToPointCloud (map_points);
   map_points_publisher_.publish (cloud);
 }
 
+void Node::PublishReferencePoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
+  sensor_msgs::PointCloud2 cloud = MapPointsToPointCloud (map_points);
+  reference_points_publisher_.publish (cloud);
+}
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
   tf2::Transform tf2_transform = TransformFromMat (position);
