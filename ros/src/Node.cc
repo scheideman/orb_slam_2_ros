@@ -63,7 +63,7 @@ void Node::Update () {
   if (publish_pointcloud_param_) {
     PublishMapPoints (orb_slam_->GetAllMapPoints());
   }
-
+  
 }
 
 
@@ -121,23 +121,24 @@ void Node::PublishMapToCameraTransform(tf2::Transform transform){
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
   tf2::Transform map_to_camera_tf = TransformFromMat (position);
 
-  // geometry_msgs::PoseStamped camera_to_map;
-  // geometry_msgs::PoseStamped base_link_to_map;
+  geometry_msgs::PoseStamped camera_to_map;
+  geometry_msgs::PoseStamped base_link_to_map;
 
-  // tf2::toMsg(map_to_camera_tf.inverse(), camera_to_map.pose);
-  // camera_to_map.header.frame_id = camera_frame_id_param_;
-  // camera_to_map.header.stamp = current_frame_time_;
+  tf2::toMsg(map_to_camera_tf.inverse(), camera_to_map.pose);
+  camera_to_map.header.frame_id = camera_frame_id_param_;
+  camera_to_map.header.stamp = current_frame_time_;
 
-  // this->tf_->transform(camera_to_map, base_link_to_map, robot_base_link_frame_id_param_);
+  this->tf_->transform(camera_to_map, base_link_to_map, robot_base_link_frame_id_param_);
 
-  // tf2::Transform base_link_to_map_tf;
-  // tf2::convert(base_link_to_map.pose, base_link_to_map_tf);
+  tf2::Transform base_link_to_map_tf;
+  tf2::convert(base_link_to_map.pose, base_link_to_map_tf);
 
   geometry_msgs::PoseStamped map_to_base_link;
-  // tf2::toMsg(base_link_to_map_tf.inverse(), map_to_base_link.pose);
-  tf2::toMsg(map_to_camera_tf, map_to_base_link.pose);
+  tf2::toMsg(base_link_to_map_tf.inverse(), map_to_base_link.pose);
+  // tf2::toMsg(map_to_camera_tf, map_to_base_link.pose);
   map_to_base_link.header.frame_id = robot_base_link_frame_id_param_;
   map_to_base_link.header.stamp = current_frame_time_;
+  // map_to_base_link.header.stamp = ros::Time::now();
 
   pose_publisher_.publish(map_to_base_link);
 }
@@ -248,17 +249,25 @@ void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &confi
 bool Node::RequestKeyFrames(std_srvs::Empty::Request &request, 
                                              std_srvs::Empty::Response &response){
     std::vector<cv::Mat> keyframes = orb_slam_->GetAllSortedKeyFrames();    
-    geometry_msgs::PoseArray poseArray;
-    poseArray.header.stamp = ros::Time::now();
-    poseArray.header.frame_id = map_frame_id_param_;
-
-    for(auto kf : keyframes){
-      tf2::Transform tfT = TransformFromMat(kf);
-      geometry_msgs::Pose poseMsg;
-      tf2::toMsg(tfT, poseMsg);
-      poseArray.poses.push_back(poseMsg);
-    }
+    
+    geometry_msgs::PoseArray poseArray = PoseVectorToPoseArray(keyframes, map_frame_id_param_);
     keyframe_publisher_.publish(poseArray);
 
     return true;
+}
+
+geometry_msgs::PoseArray Node::PoseVectorToPoseArray(vector<cv::Mat> poses, std::string frame_id){
+  geometry_msgs::PoseArray poseArray;
+  poseArray.header.stamp = ros::Time::now();
+  poseArray.header.frame_id = frame_id;
+
+  for(auto kf : poses){
+    tf2::Transform tfT = TransformFromMat(kf);
+    geometry_msgs::Pose poseMsg;
+    tf2::toMsg(tfT, poseMsg);
+    poseArray.poses.push_back(poseMsg);
+  }
+
+  return poseArray;
+  
 }

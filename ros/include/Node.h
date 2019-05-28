@@ -77,6 +77,7 @@ class Node
                                              std_srvs::Empty::Response &response);
     tf2::Transform TransformFromMat (cv::Mat position_mat);
     sensor_msgs::PointCloud2 MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points);
+    geometry_msgs::PoseArray PoseVectorToPoseArray(vector<cv::Mat> poses, std::string frame_id);
 
     dynamic_reconfigure::Server<orb_slam2_ros::dynamic_reconfigureConfig> dynamic_param_server_;
 
