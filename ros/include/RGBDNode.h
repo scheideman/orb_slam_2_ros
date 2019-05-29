@@ -48,7 +48,7 @@ class RGBDNode : public Node
     void ImageCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
 
   private:
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Subscriber<sensor_msgs::Image> *rgb_subscriber_;
     message_filters::Subscriber<sensor_msgs::Image> *depth_subscriber_;
     message_filters::Synchronizer<sync_pol> *sync_;
