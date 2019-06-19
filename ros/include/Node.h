@@ -97,6 +97,7 @@ class Node
     std::string robot_base_link_frame_id_param_;
     bool publish_pointcloud_param_;
     bool publish_pose_param_;
+    bool publish_tf_param_;
     int min_observations_per_point_;
     bool publish_map_to_odom_param_;
 

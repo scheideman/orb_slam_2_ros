@@ -1,8 +1,9 @@
 <launch>
+  <arg name="config_file" default="Astra.yaml"/>
   <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
       type="orb_slam2_ros_rgbd" args="
           $(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt
-          $(find orb_slam2_ros)/orb_slam2/config/Astra.yaml"
+          $(find orb_slam2_ros)/orb_slam2/config/$(arg config_file)"
       output="screen">
 
        <param name="publish_pointcloud" type="bool" value="true" />

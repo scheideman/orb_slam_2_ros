@@ -11,6 +11,7 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
   //static parameters
   node_handle_.param(name_of_node_+"/publish_pointcloud", publish_pointcloud_param_, true);
   node_handle_.param(name_of_node_+"/publish_pose", publish_pose_param_, true);
+  node_handle_.param(name_of_node_+"/publish_tf", publish_tf_param_, true);
   node_handle_.param(name_of_node_+"/publish_map_to_odom", publish_map_to_odom_param_, false);
   node_handle_.param<std::string>(name_of_node_+"/pointcloud_frame_id", map_frame_id_param_, "map");
   node_handle_.param<std::string>(name_of_node_+"/camera_frame_id", camera_frame_id_param_, "camera_link");
@@ -52,7 +53,9 @@ void Node::Update () {
   cv::Mat position = orb_slam_->GetCurrentPosition();
 
   if (!position.empty()) {
-    PublishPositionAsTransform (position);
+    if (publish_tf_param_){
+      PublishPositionAsTransform (position);
+    }
 
     if (publish_pose_param_) {
       PublishPositionAsPoseStamped (position);
