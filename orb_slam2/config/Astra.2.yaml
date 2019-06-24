@@ -5,15 +5,15 @@
 #--------------------------------------------------------------------------------------------
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 522.9161583744398
-Camera.fy: 523.8343175290059
-Camera.cx: 325.7044369058581
-Camera.cy: 243.6528240218208
+Camera.fx: 509.1423742607848
+Camera.fy: 509.8827515193133
+Camera.cx: 323.0815447751214
+Camera.cy: 240.3216993921018
 
-Camera.k1: 0.03021974284948763
-Camera.k2: -0.07252548041368641
-Camera.p1: 0.00221423709035007
-Camera.p2: -0.001789662688043223
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
 
 Camera.width: 640
 Camera.height: 480

@@ -1,4 +1,5 @@
 <launch>
+  <arg name="publish_tf" default="true"/>
   <arg name="config_file" default="Astra.yaml"/>
   <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
       type="orb_slam2_ros_rgbd" args="
@@ -8,6 +9,7 @@
 
        <param name="publish_pointcloud" type="bool" value="true" />
        <param name="publish_pose" type="bool" value="true" />
+       <param name="publish_tf" type="bool" value="$(arg publish_tf)" />
        <param name="localize_only" type="bool" value="false" />
        <param name="reset_map" type="bool" value="false" />
        <param name="pointcloud_frame_id" type="string" value="map" />
