@@ -35,6 +35,8 @@ Node::Node (ORB_SLAM2::System* pSLAM, ros::NodeHandle &node_handle, image_transp
   }
 
   keyframe_publisher_ = node_handle_.advertise<geometry_msgs::PoseArray> (name_of_node_+"/keyframes",1);
+  tracking_state_publisher_ = node_handle_.advertise<std_msgs::Int8> (name_of_node_+"/tracking_state",1);
+  num_tracked_map_points_publisher_ = node_handle_.advertise<std_msgs::Int32> (name_of_node_+"/num_tracked_map_points",1);
 
   request_keyframes_service_ = node_handle_.advertiseService("request_keyframes", 
                                                     &Node::RequestKeyFrames, this);
@@ -68,7 +70,21 @@ void Node::Update () {
     PublishMapPoints (orb_slam_->GetAllMapPoints());
     PublishReferencePoints(orb_slam_->GetReferenceMapPoints());
   }
+
+  PublishTrackingState(orb_slam_->GetTrackingState());
+  PublishTrackingState(orb_slam_->GetTrackedMapPoints().size());
   
+}
+
+void Node::PublishTrackingState (int tracking_state) {
+  std_msgs::Int8 state;
+  state.data = tracking_state;
+  tracking_state_publisher_.publish(state);
+}
+void Node::PublishNumTrackedMapPoints (int num_tracked_map_points) {
+  std_msgs::Int32 num_points;
+  num_points.data = num_tracked_map_points;
+  num_tracked_map_points_publisher_.publish(num_points);
 }
 
 void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {

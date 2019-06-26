@@ -47,6 +47,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
+#include <std_msgs/Int8.h>
+#include <std_msgs/Int32.h>
 #include <std_srvs/Empty.h>
 
 #include "System.h"
@@ -67,6 +69,8 @@ class Node
 
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
+    void PublishTrackingState (int tracking_state);
+    void PublishNumTrackedMapPoints (int tracking_state);
     void PublishReferencePoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);
     void PublishMapToOdomTransform(tf2::Transform transform);
@@ -87,6 +91,8 @@ class Node
     ros::Publisher reference_points_publisher_;
     ros::Publisher pose_publisher_;
     ros::Publisher keyframe_publisher_;
+    ros::Publisher tracking_state_publisher_;
+    ros::Publisher num_tracked_map_points_publisher_;
 
     std::string name_of_node_;
     ros::NodeHandle node_handle_;
