@@ -72,8 +72,7 @@ void Node::Update () {
   }
 
   PublishTrackingState(orb_slam_->GetTrackingState());
-  PublishTrackingState(orb_slam_->GetTrackedMapPoints().size());
-  
+  PublishNumTrackedMapPoints(orb_slam_->GetTrackedMapPoints().size());
 }
 
 void Node::PublishTrackingState (int tracking_state) {
