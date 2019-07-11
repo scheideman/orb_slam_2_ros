@@ -1,9 +1,10 @@
 <launch>
   <arg name="publish_tf" default="true"/>
+  <arg name="config_file" default="Astra.yaml"/>
   <node name="orb_slam2_mono" pkg="orb_slam2_ros"
       type="orb_slam2_ros_mono" args="
           $(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt
-          $(find orb_slam2_ros)/orb_slam2/config/Astra.yaml"
+          $(find orb_slam2_ros)/orb_slam2/config/$(arg config_file)"
       output="screen">
        <remap from="/camera/image_raw" to="/camera/rgb/image_raw" />
 
