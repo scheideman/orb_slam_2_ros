@@ -5,15 +5,15 @@
 #--------------------------------------------------------------------------------------------
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 522.803487
-Camera.fy: 525.820296
-Camera.cx: 316.573170 
-Camera.cy: 244.951585
+Camera.fx: 517.4168
+Camera.fy: 519.1412
+Camera.cx: 329.700926
+Camera.cy: 248.17141
 
-Camera.k1: 0.026534
-Camera.k2: -0.058084
-Camera.p1: -0.004085
-Camera.p2: -0.005345
+Camera.k1: 0.03064
+Camera.k2: -0.048689
+Camera.p1: -0.003115
+Camera.p2: -0.004384
 
 Camera.width: 640
 Camera.height: 480
@@ -22,7 +22,7 @@ Camera.height: 480
 Camera.fps: 30.0
 
 # IR projector baseline times fx (aprox.) --> 0.075 * 509
-Camera.bf: 39.210261525
+Camera.bf: 38.80626
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
